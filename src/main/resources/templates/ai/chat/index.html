@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <title>AI Chat</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        background: #f9f9f9;
+        padding: 20px;
+      }
+
+      .chat-box {
+        max-width: 600px;
+        margin: 0 auto;
+        background: white;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        padding: 16px;
+        height: 400px;
+        overflow-y: auto;
+      }
+
+      .message {
+        margin-bottom: 10px;
+        white-space: pre-wrap;
+      }
+
+      .user {
+        color: #1f78d1;
+      }
+
+      .bot {
+        color: #2b9348;
+      }
+
+      form {
+        max-width: 600px;
+        margin: 10px auto 0;
+        display: flex;
+        gap: 8px;
+      }
+
+      input[type="text"] {
+        flex: 1;
+        padding: 8px;
+        font-size: 16px;
+      }
+
+      button {
+        padding: 8px 16px;
+        font-size: 16px;
+        background: #1f78d1;
+        color: white;
+        border: none;
+        border-radius: 4px;
+      }
+
+      .loading {
+        font-size: 14px;
+        color: #888;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>AI Chat (SSE)</h2>
+    <div class="chat-box" id="chatBox"></div>
+
+    <form id="chatForm">
+      <input
+        type="text"
+        id="messageInput"
+        placeholder="메시지를 입력하세요"
+        required
+      />
+      <button type="submit">전송</button>
+    </form>
+
+    <script>
+      const chatBox = document.getElementById("chatBox");
+      const form = document.getElementById("chatForm");
+      const input = document.getElementById("messageInput");
+
+      form.addEventListener("submit", function (e) {
+        e.preventDefault();
+        const message = input.value.trim();
+        if (!message) return;
+
+        // 사용자 메시지 출력
+        appendMessage("🧑", message, "user");
+
+        // SSE 연결
+        const url =
+          "/ai/chat/generateStream?message=" + encodeURIComponent(message);
+        const eventSource = new EventSource(url);
+
+        let botResponse = "";
+        const loadingEl = document.createElement("div");
+        loadingEl.className = "loading";
+        loadingEl.textContent = "🤖 응답 중...";
+        chatBox.appendChild(loadingEl);
+
+        // 봇 응답을 위한 메시지 요소 미리 생성
+        const botMessageEl = document.createElement("div");
+        botMessageEl.className = "message bot";
+        botMessageEl.textContent = "🤖: ";
+
+        eventSource.onmessage = function (event) {
+          if (event.data === "[DONE]") {
+            eventSource.close();
+            chatBox.removeChild(loadingEl);
+          } else {
+            if (!botMessageEl.parentNode) {
+              chatBox.appendChild(botMessageEl);
+            }
+            botResponse += event.data.substring(1, event.data.length - 1);
+            botMessageEl.textContent = `🤖: ${botResponse}`;
+            chatBox.scrollTop = chatBox.scrollHeight;
+          }
+        };
+
+        eventSource.onerror = function (err) {
+          eventSource.close();
+          chatBox.removeChild(loadingEl);
+          appendMessage("⚠️", "에러가 발생했습니다.", "bot");
+        };
+
+        input.value = "";
+      });
+
+      function appendMessage(sender, text, className) {
+        const msgEl = document.createElement("div");
+        msgEl.className = "message " + className;
+        msgEl.textContent = `${sender}: ${text}`;
+        chatBox.appendChild(msgEl);
+        chatBox.scrollTop = chatBox.scrollHeight;
+      }
+    </script>
+  </body>
+</html>

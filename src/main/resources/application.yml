@@ -7,4 +7,4 @@ spring:
       api-key: NEED_TO_INPUT_ON_SECRET
       chat:
         options:
-          model: Qwen-2.5-32B
+          model: llama-3.3-70b-versatile

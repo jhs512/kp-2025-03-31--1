@@ -26,6 +26,7 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("org.springframework.ai:spring-ai-openai-spring-boot-starter")
     implementation("org.projectlombok:lombok")
+    implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
     testImplementation("io.projectreactor:reactor-test")
     developmentOnly("org.springframework.boot:spring-boot-devtools")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
