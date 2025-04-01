@@ -8,3 +8,12 @@ spring:
       chat:
         options:
           model: llama-3.3-70b-versatile
+  datasource:
+    url: jdbc:h2:./db;MODE=MySQL
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
