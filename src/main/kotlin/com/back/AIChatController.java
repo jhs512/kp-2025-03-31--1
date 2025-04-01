@@ -7,10 +7,8 @@ import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 
 import java.util.List;
@@ -20,6 +18,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AIChatController {
     private final OpenAiChatModel chatClient;
+    private final AiChatRoomService aiChatRoomService;
 
     @GetMapping("/generate")
     @ResponseBody
@@ -60,8 +59,21 @@ public class AIChatController {
                 });
     }
 
-    @GetMapping(value = "")
+    @GetMapping
     public String index() {
+        AIChatRoom aiChatRoom = aiChatRoomService.makeNewRoom();
+
+        return "redirect:/ai/chat/" + aiChatRoom.getId();
+    }
+
+    @GetMapping("/{id}")
+    public String room(
+            @PathVariable Long id,
+            Model model
+    ) {
+        AIChatRoom aiChatRoom = aiChatRoomService.findById(id).get();
+        model.addAttribute("aiChatRoom", aiChatRoom);
+
         return "ai/chat/index";
     }
 }
