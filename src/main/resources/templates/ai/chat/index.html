@@ -64,6 +64,11 @@
 </head>
 <body>
 <h2><span th:text="${aiChatRoom.id}"></span>번 채팅방</h2>
+
+<script th:inline="javascript">
+    var chatRoomId = /*[[${aiChatRoom.id}]]*/ 0;
+</script>
+
 <div class="chat-box" id="chatBox"></div>
 
 <form id="chatForm">
@@ -91,7 +96,7 @@
 
         // SSE 연결
         const url =
-            "/ai/chat/generateStream?message=" + encodeURIComponent(message);
+            `/ai/chat/generateStream/${chatRoomId}?message=` + encodeURIComponent(message);
         const eventSource = new EventSource(url);
 
         let botResponse = "";

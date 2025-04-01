@@ -28,4 +28,16 @@ public class AIChatRoom {
     @OneToMany(mappedBy = "chatRoom", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<AIChatRoomMessage> messages = new ArrayList<>();
+
+    public AIChatRoomMessage addMessage(String userMessage, String botMessage) {
+        AIChatRoomMessage message = AIChatRoomMessage
+                .builder()
+                .chatRoom(this)
+                .userMessage(userMessage)
+                .botMessage(botMessage)
+                .build();
+        messages.add(message);
+
+        return message;
+    }
 }

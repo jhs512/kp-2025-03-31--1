@@ -33,13 +33,17 @@ public class AIChatController {
                 .call(message);
     }
 
-    @GetMapping(value = "/generateStream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    @GetMapping(value = "/generateStream/{chatRoomId}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     @ResponseBody
     public Flux<ServerSentEvent<String>> generateStream(
+            @PathVariable Long chatRoomId,
             @RequestParam(value = "message", defaultValue = "Tell me a joke") String message
     ) {
+        AIChatRoom aiChatRoom = aiChatRoomService.findById(chatRoomId).get();
+
         // 프롬프트 생성
         Prompt prompt = new Prompt(List.of(new UserMessage(message)));
+        StringBuilder fullResponse = new StringBuilder();
 
         // 스트리밍 처리
         return chatClient.stream(prompt)
@@ -47,12 +51,21 @@ public class AIChatController {
                     if (chunk.getResult() == null ||
                             chunk.getResult().getOutput() == null ||
                             chunk.getResult().getOutput().getText() == null) {
+
+                        aiChatRoom.addMessage(
+                                message,
+                                fullResponse.toString()
+                        );
+
+                        aiChatRoomService.save(aiChatRoom);
+
                         return ServerSentEvent.<String>builder()
                                 .data("[DONE]")
                                 .build();
                     }
 
                     String text = chunk.getResult().getOutput().getText();
+                    fullResponse.append(text);
                     return ServerSentEvent.<String>builder()
                             .data("\"" + text + "\"")
                             .build();
@@ -66,12 +79,12 @@ public class AIChatController {
         return "redirect:/ai/chat/" + aiChatRoom.getId();
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/{chatRoomId}")
     public String room(
-            @PathVariable Long id,
+            @PathVariable Long chatRoomId,
             Model model
     ) {
-        AIChatRoom aiChatRoom = aiChatRoomService.findById(id).get();
+        AIChatRoom aiChatRoom = aiChatRoomService.findById(chatRoomId).get();
         model.addAttribute("aiChatRoom", aiChatRoom);
 
         return "ai/chat/index";

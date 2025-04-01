@@ -18,4 +18,8 @@ public class AiChatRoomService {
         AIChatRoom aiChatRoom = AIChatRoom.builder().build();
         return aiChatRoomRepository.save(aiChatRoom);
     }
+
+    public void save(AIChatRoom aiChatRoom) {
+        aiChatRoomRepository.save(aiChatRoom);
+    }
 }
