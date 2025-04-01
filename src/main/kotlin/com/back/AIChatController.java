@@ -89,4 +89,16 @@ public class AIChatController {
 
         return "ai/chat/index";
     }
+
+    @GetMapping("/{chatRoomId}/messages")
+    @ResponseBody
+    public List<AIChatRoomMessageDto> getMessages(
+            @PathVariable Long chatRoomId
+    ) {
+        AIChatRoom aiChatRoom = aiChatRoomService.findById(chatRoomId).get();
+        return aiChatRoom.getMessages()
+                .stream()
+                .map(AIChatRoomMessageDto::new)
+                .toList();
+    }
 }
