@@ -17,6 +17,7 @@ import reactor.core.publisher.Flux;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Controller
 @RequestMapping("/ai/chat")
@@ -46,21 +47,31 @@ public class AIChatController {
     ) {
         AIChatRoom aiChatRoom = aiChatRoomService.findById(chatRoomId).get();
 
+        List<AIChatRoomMessage> oldMessages = aiChatRoom.getMessages();
+        int oldMessagesSize = oldMessages.size();
+        int previousMessagesSize = 10;
+
         // 이전 대화 내용 가져오기 (최대 10개)
-        List<Message> previousMessages = aiChatRoom.getMessages().stream()
-                .limit(10)
+        List<Message> previousMessages = oldMessages
+                .subList(Math.max(0, oldMessagesSize - previousMessagesSize), oldMessagesSize)
+                .stream()
                 .flatMap(msg ->
-                        List.of(
-                                        new UserMessage(msg.getUserMessage()),
-                                        new AssistantMessage(msg.getBotMessage())
-                                )
-                                .stream()
+                        Stream.of(
+                                new UserMessage(msg.getUserMessage()),
+                                new AssistantMessage(msg.getBotMessage())
+                        )
                 )
                 .collect(Collectors.toList());
 
         // 시스템 메시지 추가 (한국인 컨텍스트)
         List<Message> messages = new ArrayList<>();
-        messages.add(new SystemMessage("당신은 한국인과 대화하고 있습니다. 한국의 문화와 정서를 이해하고 있어야 합니다."));
+        messages.add(new SystemMessage("""
+                당신은 한국인과 대화하고 있습니다.
+                한국의 문화와 정서를 이해하고 있어야 합니다.
+                최대한 한국어/영어만 사용해줘요.
+                한자사용 자제해줘.
+                영어보다 한국어를 우선적으로 사용해줘요.
+                """));
         messages.addAll(previousMessages);
         messages.add(new UserMessage(message));
 
