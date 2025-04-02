@@ -25,6 +25,8 @@ public class AIChatRoomMessage {
     private LocalDateTime modifyDate;
     @ManyToOne
     private AIChatRoom chatRoom;
+    @Column(columnDefinition = "LONGTEXT")
     private String userMessage;
+    @Column(columnDefinition = "LONGTEXT")
     private String botMessage;
 }
