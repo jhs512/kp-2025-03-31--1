@@ -65,10 +65,30 @@ public class AIChatRoom {
         int startMessageIndex = lastSummaryMessageIndex + 1;
         int endMessageIndex = startMessageIndex + PREVIEWS_MESSAGES_COUNT;
 
+        StringBuilder messageBuilder = new StringBuilder();
+
+        // 가장 마지막 요약 내용 + startMessageIndex ~ endMessageIndex
+
+        if ( !summaryMessages.isEmpty() ) {
+            messageBuilder.append(summaryMessages.getLast().getMessage());
+            messageBuilder.append("\n");
+            messageBuilder.append("\n");
+        }
+
+        messageBuilder.append("== %d번 ~ %d번 내용 요약 ==".formatted(startMessageIndex, endMessageIndex));
+        messageBuilder.append("\n");
+
+        for (int i = startMessageIndex; i < endMessageIndex; i++) {
+            AIChatRoomMessage message = messages.get(i);
+            messageBuilder.append("Q: ").append(message.getUserMessage()).append("\n");
+            messageBuilder.append("A: ").append(message.getBotMessage()).append("\n");
+            messageBuilder.append("\n");
+        }
+
         AIChatRoomSummaryMessage summaryMessage = AIChatRoomSummaryMessage
                 .builder()
                 .chatRoom(this)
-                .message("요약")
+                .message(messageBuilder.toString())
                 .startMessageIndex(startMessageIndex)
                 .endMessageIndex(endMessageIndex)
                 .build();

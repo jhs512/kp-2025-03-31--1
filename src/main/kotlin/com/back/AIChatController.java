@@ -74,6 +74,16 @@ public class AIChatController {
                 한자사용 자제해줘.
                 영어보다 한국어를 우선적으로 사용해줘요.
                 """));
+
+        if (!aiChatRoom.getSummaryMessages().isEmpty()) {
+            messages.add(
+                    new SystemMessage(
+                            "지난 대화 요약\n\n" + aiChatRoom.getSummaryMessages()
+                                    .getLast().getMessage()
+                    )
+            );
+        }
+
         messages.addAll(previousMessages);
         messages.add(new UserMessage(message));
 
