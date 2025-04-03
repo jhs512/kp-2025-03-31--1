@@ -47,18 +47,32 @@ public class AIChatRoom {
                 .build();
         messages.add(message);
 
-        if (messages.size() > PREVIEWS_MESSAGES_COUNT && summaryMessages.isEmpty()) {
-            AIChatRoomSummaryMessage summaryMessage = AIChatRoomSummaryMessage
-                    .builder()
-                    .chatRoom(this)
-                    .message("0 ~ 2 요약")
-                    .startMessageIndex(0)
-                    .endMessageIndex(2)
-                    .build();
-
-            summaryMessages.add(summaryMessage);
-        }
+        addSummaryMessageIfNeeded();
 
         return message;
+    }
+
+    private void addSummaryMessageIfNeeded() {
+        if (messages.size() <= PREVIEWS_MESSAGES_COUNT && summaryMessages.isEmpty()) return;
+
+        int lastSummaryMessageIndex = summaryMessages.isEmpty() ? -1 : summaryMessages.getLast().getEndMessageIndex();
+        int lastSummaryMessageNo = lastSummaryMessageIndex + 1;
+
+        if (messages.size() - PREVIEWS_MESSAGES_COUNT <= lastSummaryMessageNo) {
+            return;
+        }
+
+        int startMessageIndex = lastSummaryMessageIndex + 1;
+        int endMessageIndex = startMessageIndex + PREVIEWS_MESSAGES_COUNT;
+
+        AIChatRoomSummaryMessage summaryMessage = AIChatRoomSummaryMessage
+                .builder()
+                .chatRoom(this)
+                .message("요약")
+                .startMessageIndex(startMessageIndex)
+                .endMessageIndex(endMessageIndex)
+                .build();
+
+        summaryMessages.add(summaryMessage);
     }
 }

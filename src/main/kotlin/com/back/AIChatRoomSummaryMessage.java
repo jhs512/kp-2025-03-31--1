@@ -27,6 +27,6 @@ public class AIChatRoomSummaryMessage {
     private AIChatRoom chatRoom;
     @Column(columnDefinition = "LONGTEXT")
     private String message;
-    private int startMessageIndex; // 0
-    private int endMessageIndex; // 2
+    private int startMessageIndex;
+    private int endMessageIndex;
 }
