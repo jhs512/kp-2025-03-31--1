@@ -19,6 +19,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.back.AIChatRoom.PREVIEWS_MESSAGES_COUNT;
+
 @Controller
 @RequestMapping("/ai/chat")
 @RequiredArgsConstructor
@@ -49,7 +51,7 @@ public class AIChatController {
 
         List<AIChatRoomMessage> oldMessages = aiChatRoom.getMessages();
         int oldMessagesSize = oldMessages.size();
-        int previousMessagesSize = 10;
+        int previousMessagesSize = PREVIEWS_MESSAGES_COUNT;
 
         // 이전 대화 내용 가져오기 (최대 10개)
         List<Message> previousMessages = oldMessages
