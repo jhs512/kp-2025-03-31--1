@@ -63,7 +63,10 @@
     </style>
   </head>
   <body>
-    <h2><span th:text="${aiChatRoom.id}"></span>번 채팅방</h2>
+    <h2>
+      <span th:text="${aiChatRoom.id}"></span>번
+      채팅방(<span th:text="${aiChatRoom.createDate}"></span>)
+    </h2>
 
     <script th:inline="javascript">
       var chatRoomId = /*[[${aiChatRoom.id}]]*/ 0;

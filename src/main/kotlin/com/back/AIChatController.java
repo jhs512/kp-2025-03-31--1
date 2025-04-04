@@ -10,6 +10,7 @@ import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
@@ -43,6 +44,7 @@ public class AIChatController {
 
     @GetMapping(value = "/generateStream/{chatRoomId}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     @ResponseBody
+    @Transactional
     public Flux<ServerSentEvent<String>> generateStream(
             @PathVariable Long chatRoomId,
             @RequestParam(value = "message", defaultValue = "Tell me a joke") String message
@@ -119,6 +121,7 @@ public class AIChatController {
     }
 
     @GetMapping
+    @Transactional
     public String index() {
         AIChatRoom aiChatRoom = aiChatRoomService.makeNewRoom();
 
@@ -138,6 +141,7 @@ public class AIChatController {
 
     @GetMapping("/{chatRoomId}/messages")
     @ResponseBody
+    @Transactional(readOnly = true)
     public List<AIChatRoomMessageDto> getMessages(
             @PathVariable Long chatRoomId
     ) {
