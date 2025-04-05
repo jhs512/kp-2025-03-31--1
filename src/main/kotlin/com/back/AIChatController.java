@@ -7,8 +7,11 @@ import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.openai.OpenAiChatModel;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.ServerSentEvent;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
@@ -20,12 +23,13 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.back.AIChatRoom.PREVIEWS_MESSAGES_COUNT;
-
 @Controller
 @RequestMapping("/ai/chat")
 @RequiredArgsConstructor
 public class AIChatController {
+    @Autowired
+    @Lazy
+    private AIChatController self;
     private final OpenAiChatModel chatClient;
     private final AiChatRoomService aiChatRoomService;
 
@@ -33,31 +37,34 @@ public class AIChatController {
     @ResponseBody
     public String generate(
             @RequestParam(
-                    value = "message",
                     defaultValue = "Tell me a joke"
             )
-            String message
+            String userMessage
     ) {
         return chatClient
-                .call(message);
+                .call(userMessage);
     }
 
     @GetMapping(value = "/generateStream/{chatRoomId}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     @ResponseBody
-    @Transactional
+    @Transactional(readOnly = true)
     public Flux<ServerSentEvent<String>> generateStream(
             @PathVariable Long chatRoomId,
-            @RequestParam(value = "message", defaultValue = "Tell me a joke") String message
+            @RequestParam(defaultValue = "Tell me a joke") String userMessage
     ) {
         AIChatRoom aiChatRoom = aiChatRoomService.findById(chatRoomId).get();
 
+        int lastSummaryMessageEndMessageIndex = aiChatRoom.getLastSummaryMessageEndMessageIndex();
         List<AIChatRoomMessage> oldMessages = aiChatRoom.getMessages();
         int oldMessagesSize = oldMessages.size();
-        int previousMessagesSize = PREVIEWS_MESSAGES_COUNT;
 
-        // 이전 대화 내용 가져오기 (최대 10개)
+        // 이전 대화 내용 가져오기
         List<Message> previousMessages = oldMessages
-                .subList(Math.max(0, oldMessagesSize - previousMessagesSize), oldMessagesSize)
+                // 가장 마지막 요약 메시지 이후의 메시지들
+                .subList(
+                        Math.max(0, lastSummaryMessageEndMessageIndex + 1),
+                        oldMessagesSize
+                )
                 .stream()
                 .flatMap(msg ->
                         Stream.of(
@@ -69,25 +76,21 @@ public class AIChatController {
 
         // 시스템 메시지 추가 (한국인 컨텍스트)
         List<Message> messages = new ArrayList<>();
-        messages.add(new SystemMessage("""
-                당신은 한국인과 대화하고 있습니다.
-                한국의 문화와 정서를 이해하고 있어야 합니다.
-                최대한 한국어/영어만 사용해줘요.
-                한자사용 자제해줘.
-                영어보다 한국어를 우선적으로 사용해줘요.
-                """));
+        messages.add(new SystemMessage(aiChatRoom.getSystemMessage()));
 
         if (!aiChatRoom.getSummaryMessages().isEmpty()) {
             messages.add(
                     new SystemMessage(
-                            "지난 대화 요약\n\n" + aiChatRoom.getSummaryMessages()
-                                    .getLast().getMessage()
+                            aiChatRoom
+                                    .getSummaryMessages()
+                                    .getLast()
+                                    .getBotMessage()
                     )
             );
         }
 
         messages.addAll(previousMessages);
-        messages.add(new UserMessage(message));
+        messages.add(new UserMessage(userMessage));
 
         // 프롬프트 생성
         Prompt prompt = new Prompt(messages);
@@ -100,12 +103,13 @@ public class AIChatController {
                             chunk.getResult().getOutput() == null ||
                             chunk.getResult().getOutput().getText() == null) {
 
-                        aiChatRoom.addMessage(
-                                message,
-                                fullResponse.toString()
-                        );
+                        String botMessage = fullResponse.toString();
 
-                        aiChatRoomService.save(aiChatRoom);
+                        self.addMessage(
+                                aiChatRoom,
+                                userMessage,
+                                botMessage
+                        );
 
                         return ServerSentEvent.<String>builder()
                                 .data("[DONE]")
@@ -118,6 +122,11 @@ public class AIChatController {
                             .data("\"" + text + "\"")
                             .build();
                 });
+    }
+
+    @Async
+    public void addMessage(AIChatRoom aiChatRoom, String userMessage, String botMessage) {
+        aiChatRoomService.addMessage(chatClient, aiChatRoom, userMessage, botMessage);
     }
 
     @GetMapping

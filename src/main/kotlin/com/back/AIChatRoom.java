@@ -30,6 +30,9 @@ public class AIChatRoom {
     @LastModifiedDate
     private LocalDateTime modifyDate;
 
+    private String systemMessage;
+    private String systemStrategyMessage;
+
     @OneToMany(mappedBy = "chatRoom", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<AIChatRoomSummaryMessage> summaryMessages = new ArrayList<>();
@@ -47,50 +50,73 @@ public class AIChatRoom {
                 .build();
         messages.add(message);
 
-        addSummaryMessageIfNeeded();
-
         return message;
     }
 
-    private void addSummaryMessageIfNeeded() {
-        if (messages.size() <= PREVIEWS_MESSAGES_COUNT && summaryMessages.isEmpty()) return;
-
-        int lastSummaryMessageIndex = summaryMessages.isEmpty() ? -1 : summaryMessages.getLast().getEndMessageIndex();
-        int lastSummaryMessageNo = lastSummaryMessageIndex + 1;
-
-        if (messages.size() - PREVIEWS_MESSAGES_COUNT <= lastSummaryMessageNo) {
-            return;
+    // 다음 메세지가 추가된 후 요약을 새로할 필요가 있는지 체크
+    public boolean needToMakeSummaryMessageOnNextMessageAdded() {
+        if (messages.size() < PREVIEWS_MESSAGES_COUNT) {
+            return false;
         }
 
-        int startMessageIndex = lastSummaryMessageIndex + 1;
-        int endMessageIndex = startMessageIndex + PREVIEWS_MESSAGES_COUNT;
+        // 다다음 메세지가 생성되기 위해서 요약이 필요하다면
+        // 다음 메세지가 생성된 직후 요약을 하는게 맞다.
+        // 그렇기 때문에 여기서 다다음 메세지 번호를 기준으로 계산한다.
+        int nextNextMessageNo = messages.size() + 2;
 
+        // 판별공식 : 다다음_메세지_번호 - N > 마지막_요약_메세지_번호
+        return nextNextMessageNo - PREVIEWS_MESSAGES_COUNT > getLastSummaryMessageEndMessageNo();
+    }
+
+    public int getLastSummaryMessageEndMessageIndex() {
+        if (summaryMessages.isEmpty()) {
+            return -1;
+        }
+
+        return summaryMessages.getLast().getEndMessageIndex();
+    }
+
+    public int getLastSummaryMessageEndMessageNo() {
+        return getLastSummaryMessageEndMessageIndex() + 1;
+    }
+
+    public String genNewSummarySourceMessage(String userMessage, String botMessage) {
         StringBuilder messageBuilder = new StringBuilder();
 
-        // 가장 마지막 요약 내용 + startMessageIndex ~ endMessageIndex
-
-        if ( !summaryMessages.isEmpty() ) {
-            messageBuilder.append(summaryMessages.getLast().getMessage());
+        if (!summaryMessages.isEmpty()) {
+            messageBuilder.append(summaryMessages.getLast().getBotMessage());
             messageBuilder.append("\n");
             messageBuilder.append("\n");
         }
 
-        messageBuilder.append("== %d번 ~ %d번 내용 요약 ==".formatted(startMessageIndex, endMessageIndex));
+        int startMessageIndex = getLastSummaryMessageEndMessageIndex() + 1;
+        int endMessageIndex = getMessages().size() - 1;
+
+        messageBuilder.append("== %d번 ~ %d번 내용 요약 ==".formatted(startMessageIndex, endMessageIndex + 1));
         messageBuilder.append("\n");
 
-        for (int i = startMessageIndex; i < endMessageIndex; i++) {
+        for (int i = startMessageIndex; i <= endMessageIndex; i++) {
             AIChatRoomMessage message = messages.get(i);
             messageBuilder.append("Q: ").append(message.getUserMessage()).append("\n");
             messageBuilder.append("A: ").append(message.getBotMessage()).append("\n");
             messageBuilder.append("\n");
         }
 
+        messageBuilder.append("Q: ").append(userMessage).append("\n");
+        messageBuilder.append("A: ").append(botMessage).append("\n");
+        messageBuilder.append("\n");
+
+        return messageBuilder.toString();
+    }
+
+    public void addSummaryMessage(String forSummaryUserMessage, String forSummaryBotMessage) {
         AIChatRoomSummaryMessage summaryMessage = AIChatRoomSummaryMessage
                 .builder()
                 .chatRoom(this)
-                .message(messageBuilder.toString())
-                .startMessageIndex(startMessageIndex)
-                .endMessageIndex(endMessageIndex)
+                .userMessage(forSummaryUserMessage)
+                .botMessage(forSummaryBotMessage)
+                .startMessageIndex(getLastSummaryMessageEndMessageIndex() + 1)
+                .endMessageIndex(getMessages().size() - 1)
                 .build();
 
         summaryMessages.add(summaryMessage);

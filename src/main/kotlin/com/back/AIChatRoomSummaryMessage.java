@@ -26,7 +26,17 @@ public class AIChatRoomSummaryMessage {
     @ManyToOne
     private AIChatRoom chatRoom;
     @Column(columnDefinition = "LONGTEXT")
-    private String message;
+    private String userMessage;
+    @Column(columnDefinition = "LONGTEXT")
+    private String botMessage;
     private int startMessageIndex;
     private int endMessageIndex;
+
+    public int getMessageNo() {
+        return startMessageIndex + 1;
+    }
+
+    public int getEndMessageNo() {
+        return endMessageIndex + 1;
+    }
 }

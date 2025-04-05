@@ -1,121 +1,121 @@
 <!DOCTYPE html>
 <html lang="ko">
-  <head>
-    <meta charset="UTF-8" />
+<head>
+    <meta charset="UTF-8"/>
     <title>AI Chat</title>
     <style>
-      body {
-        font-family: sans-serif;
-        background: #f9f9f9;
-        padding: 20px;
-      }
-
-      .chat-box {
-        max-width: 600px;
-        margin: 0 auto;
-        background: white;
-        border: 1px solid #ccc;
-        border-radius: 8px;
-        padding: 16px;
-        height: 400px;
-        overflow-y: auto;
-      }
-
-      .message {
-        margin-bottom: 10px;
-        white-space: pre-wrap;
-      }
-
-      .user {
-        color: #1f78d1;
-      }
-
-      .bot {
-        color: #2b9348;
-      }
-
-      form {
-        max-width: 600px;
-        margin: 10px auto 0;
-        display: flex;
-        gap: 8px;
-      }
-
-      input[type="text"] {
-        flex: 1;
-        padding: 8px;
-        font-size: 16px;
-      }
-
-      button {
-        padding: 8px 16px;
-        font-size: 16px;
-        background: #1f78d1;
-        color: white;
-        border: none;
-        border-radius: 4px;
-      }
-
-      .loading {
-        font-size: 14px;
-        color: #888;
-      }
-    </style>
-  </head>
-  <body>
-    <h2>
-      <span th:text="${aiChatRoom.id}"></span>번
-      채팅방(<span th:text="${aiChatRoom.createDate}"></span>)
-    </h2>
-
-    <script th:inline="javascript">
-      var chatRoomId = /*[[${aiChatRoom.id}]]*/ 0;
-    </script>
-
-    <div class="chat-box" id="chatBox"></div>
-
-    <form id="chatForm">
-      <input
-        type="text"
-        id="messageInput"
-        placeholder="메시지를 입력하세요"
-        required
-      />
-      <button type="submit">전송</button>
-    </form>
-
-    <script>
-      const chatBox = document.getElementById("chatBox");
-      const form = document.getElementById("chatForm");
-      const input = document.getElementById("messageInput");
-
-      // 페이지 로드 시 기존 메시지 로딩
-      async function loadExistingMessages() {
-        try {
-          const response = await fetch(`/ai/chat/${chatRoomId}/messages`);
-          const messages = await response.json();
-
-          messages.forEach((message) => {
-            appendMessage(
-              "🧑", message.userMessage, "user"
-            );
-
-              appendMessage(
-                  "🤖", message.botMessage, "bot"
-              );
-          });
-
-          chatBox.scrollTop = chatBox.scrollHeight;
-        } catch (error) {
-          console.error("메시지 로딩 중 오류 발생:", error);
-          appendMessage("⚠️", "기존 메시지를 불러오는데 실패했습니다.", "bot");
+        body {
+            font-family: sans-serif;
+            background: #f9f9f9;
+            padding: 20px;
         }
-      }
 
-      // 페이지 로드 시 실행
-      loadExistingMessages();
+        .chat-box {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            padding: 16px;
+            height: 400px;
+            overflow-y: auto;
+        }
 
-      form.addEventListener("submit", function (e) {
+        .message {
+            margin-bottom: 10px;
+            white-space: pre-wrap;
+        }
+
+        .user {
+            color: #1f78d1;
+        }
+
+        .bot {
+            color: #2b9348;
+        }
+
+        form {
+            max-width: 600px;
+            margin: 10px auto 0;
+            display: flex;
+            gap: 8px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 8px;
+            font-size: 16px;
+        }
+
+        button {
+            padding: 8px 16px;
+            font-size: 16px;
+            background: #1f78d1;
+            color: white;
+            border: none;
+            border-radius: 4px;
+        }
+
+        .loading {
+            font-size: 14px;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+<h2>
+    <span th:text="${aiChatRoom.id}"></span>번
+    채팅방(<span th:text="${aiChatRoom.createDate}"></span>)
+</h2>
+
+<script th:inline="javascript">
+    var chatRoomId = /*[[${aiChatRoom.id}]]*/ 0;
+</script>
+
+<div class="chat-box" id="chatBox"></div>
+
+<form id="chatForm">
+    <input
+            type="text"
+            id="messageInput"
+            placeholder="메시지를 입력하세요"
+            required
+    />
+    <button type="submit">전송</button>
+</form>
+
+<script>
+    const chatBox = document.getElementById("chatBox");
+    const form = document.getElementById("chatForm");
+    const input = document.getElementById("messageInput");
+
+    // 페이지 로드 시 기존 메시지 로딩
+    async function loadExistingMessages() {
+        try {
+            const response = await fetch(`/ai/chat/${chatRoomId}/messages`);
+            const messages = await response.json();
+
+            messages.forEach((message) => {
+                appendMessage(
+                    "🧑", message.userMessage, "user"
+                );
+
+                appendMessage(
+                    "🤖", message.botMessage, "bot"
+                );
+            });
+
+            chatBox.scrollTop = chatBox.scrollHeight;
+        } catch (error) {
+            console.error("메시지 로딩 중 오류 발생:", error);
+            appendMessage("⚠️", "기존 메시지를 불러오는데 실패했습니다.", "bot");
+        }
+    }
+
+    // 페이지 로드 시 실행
+    loadExistingMessages();
+
+    form.addEventListener("submit", function (e) {
         e.preventDefault();
         const message = input.value.trim();
         if (!message) return;
@@ -124,9 +124,7 @@
         appendMessage("🧑", message, "user");
 
         // SSE 연결
-        const url =
-          `/ai/chat/generateStream/${chatRoomId}?message=` +
-          encodeURIComponent(message);
+        const url = `/ai/chat/generateStream/${chatRoomId}?userMessage=${encodeURIComponent(message)}`;
         const eventSource = new EventSource(url);
 
         let botResponse = "";
@@ -141,35 +139,35 @@
         botMessageEl.textContent = "🤖: ";
 
         eventSource.onmessage = function (event) {
-          if (event.data === "[DONE]") {
-            eventSource.close();
-            chatBox.removeChild(loadingEl);
-          } else {
-            if (!botMessageEl.parentNode) {
-              chatBox.appendChild(botMessageEl);
+            if (event.data === "[DONE]") {
+                eventSource.close();
+                chatBox.removeChild(loadingEl);
+            } else {
+                if (!botMessageEl.parentNode) {
+                    chatBox.appendChild(botMessageEl);
+                }
+                botResponse += event.data.substring(1, event.data.length - 1);
+                botMessageEl.textContent = `🤖: ${botResponse}`;
+                chatBox.scrollTop = chatBox.scrollHeight;
             }
-            botResponse += event.data.substring(1, event.data.length - 1);
-            botMessageEl.textContent = `🤖: ${botResponse}`;
-            chatBox.scrollTop = chatBox.scrollHeight;
-          }
         };
 
         eventSource.onerror = function (err) {
-          eventSource.close();
-          chatBox.removeChild(loadingEl);
-          appendMessage("⚠️", "에러가 발생했습니다.", "bot");
+            eventSource.close();
+            chatBox.removeChild(loadingEl);
+            appendMessage("⚠️", "에러가 발생했습니다.", "bot");
         };
 
         input.value = "";
-      });
+    });
 
-      function appendMessage(sender, text, className) {
+    function appendMessage(sender, text, className) {
         const msgEl = document.createElement("div");
         msgEl.className = "message " + className;
         msgEl.textContent = `${sender}: ${text}`;
         chatBox.appendChild(msgEl);
         chatBox.scrollTop = chatBox.scrollHeight;
-      }
-    </script>
-  </body>
+    }
+</script>
+</body>
 </html>
