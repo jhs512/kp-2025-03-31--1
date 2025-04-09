@@ -55,15 +55,24 @@ public class AIChatController {
         AIChatRoom aiChatRoom = aiChatRoomService.findById(chatRoomId).get();
 
         int lastSummaryMessageEndMessageIndex = aiChatRoom.getLastSummaryMessageEndMessageIndex();
+
         List<AIChatRoomMessage> oldMessages = aiChatRoom.getMessages();
-        int oldMessagesSize = oldMessages.size();
+
+        int oldMessagesToIndex = oldMessages.size() - 1;
+
+        int oldMessagesFromIndex = Math.min(
+                lastSummaryMessageEndMessageIndex + 1,
+                oldMessagesToIndex - AIChatRoom.PREVIEWS_MESSAGES_COUNT
+        );
+
+        oldMessagesFromIndex = Math.max(0, oldMessagesFromIndex);
 
         // 이전 대화 내용 가져오기
         List<Message> previousMessages = oldMessages
                 // 가장 마지막 요약 메시지 이후의 메시지들
                 .subList(
-                        Math.max(0, lastSummaryMessageEndMessageIndex + 1),
-                        oldMessagesSize
+                        oldMessagesFromIndex,
+                        oldMessagesToIndex + 1
                 )
                 .stream()
                 .flatMap(msg ->

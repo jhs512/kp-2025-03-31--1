@@ -19,14 +19,25 @@ public class AIChatRoomMessage {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     @CreatedDate
     private LocalDateTime createDate;
+
     @LastModifiedDate
     private LocalDateTime modifyDate;
+
     @ManyToOne
     private AIChatRoom chatRoom;
+
+    @ManyToOne
+    private AIChatRoomSummaryMessage summaryMessage;
+
     @Column(columnDefinition = "LONGTEXT")
     private String userMessage;
+
     @Column(columnDefinition = "LONGTEXT")
     private String botMessage;
+
+    private int startPreviousMessageIndex;
+    private int endPreviousMessageIndex;
 }

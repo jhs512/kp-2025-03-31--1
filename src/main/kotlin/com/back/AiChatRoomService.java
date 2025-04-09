@@ -75,13 +75,14 @@ public class AiChatRoomService {
 
     @Transactional
     public void _addMessage(AIChatRoom aiChatRoom, String userMessage, String botMessage, String forSummaryUserMessage, String forSummaryBotMessage) {
-        aiChatRoom.addMessage(
+        AIChatRoomMessage aiChatRoomMessage = aiChatRoom.addMessage(
                 userMessage,
-                botMessage
+                botMessage,
+                aiChatRoom.getLastSummaryMessage()
         );
 
         if (forSummaryUserMessage != null && forSummaryBotMessage != null) {
-            aiChatRoom.addSummaryMessage(
+            AIChatRoomSummaryMessage aiChatRoomSummaryMessage = aiChatRoom.addSummaryMessage(
                     forSummaryUserMessage,
                     forSummaryBotMessage
             );

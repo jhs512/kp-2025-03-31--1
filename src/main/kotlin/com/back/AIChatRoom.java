@@ -31,8 +31,8 @@ public class AIChatRoom {
     private LocalDateTime modifyDate;
 
     private String systemMessage;
-    private String systemStrategyMessage;
 
+    private String systemStrategyMessage;
     @OneToMany(mappedBy = "chatRoom", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<AIChatRoomSummaryMessage> summaryMessages = new ArrayList<>();
@@ -41,13 +41,29 @@ public class AIChatRoom {
     @Builder.Default
     private List<AIChatRoomMessage> messages = new ArrayList<>();
 
-    public AIChatRoomMessage addMessage(String userMessage, String botMessage) {
+    public AIChatRoomMessage addMessage(
+            String userMessage,
+            String botMessage,
+            AIChatRoomSummaryMessage summaryMessage
+    ) {
+        int endPreviousMessageIndex = messages.size();
+        int startPreviousMessageIndex = Math.max(
+                getLastSummaryMessageEndMessageIndex() + 1,
+                endPreviousMessageIndex - PREVIEWS_MESSAGES_COUNT
+        );
+
+        startPreviousMessageIndex = Math.max(0, startPreviousMessageIndex);
+
         AIChatRoomMessage message = AIChatRoomMessage
                 .builder()
                 .chatRoom(this)
                 .userMessage(userMessage)
                 .botMessage(botMessage)
+                .summaryMessage(summaryMessage)
+                .startPreviousMessageIndex(startPreviousMessageIndex)
+                .endPreviousMessageIndex(endPreviousMessageIndex)
                 .build();
+
         messages.add(message);
 
         return message;
@@ -109,7 +125,7 @@ public class AIChatRoom {
         return messageBuilder.toString();
     }
 
-    public void addSummaryMessage(String forSummaryUserMessage, String forSummaryBotMessage) {
+    public AIChatRoomSummaryMessage addSummaryMessage(String forSummaryUserMessage, String forSummaryBotMessage) {
         AIChatRoomSummaryMessage summaryMessage = AIChatRoomSummaryMessage
                 .builder()
                 .chatRoom(this)
@@ -120,5 +136,15 @@ public class AIChatRoom {
                 .build();
 
         summaryMessages.add(summaryMessage);
+
+        return summaryMessage;
+    }
+
+    public AIChatRoomSummaryMessage getLastSummaryMessage() {
+        if (summaryMessages.isEmpty()) {
+            return null;
+        }
+
+        return summaryMessages.getLast();
     }
 }
